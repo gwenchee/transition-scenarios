@@ -1,5 +1,5 @@
 
-<simulation>
+<simulation xml:base="{{base_dir}}" xmlns:xi="http://www.w3.org/2001/XInclude">
     <control>
         <!-- 1959 to 2211 -->
         <duration>1440</duration>
