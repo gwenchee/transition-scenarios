@@ -53,7 +53,7 @@
     </config>
   </facility>
 
-<xi:include href="input/generated/lwr_reactors.xml#xpointer(/inclusions/child::*)"/>
+<xi:include href="input/lwr_reactors.xml#xpointer(/inclusions/child::*)"/>
 
   <facility>
     <name>sink</name>
@@ -101,7 +101,7 @@
           <name>lwr_inst</name>
           <config>
                <DeployInst>
-                  <xi:include href="input/generated/lwr_reactor_deployment.xml#xpointer(/inclusions/child::*)"/>
+                  <xi:include href="input/lwr_reactor_deployment.xml#xpointer(/inclusions/child::*)"/>
                </DeployInst>
           </config>
      </institution>
