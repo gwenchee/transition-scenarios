@@ -95,14 +95,12 @@
         </entry>
         
       </initialfacilitylist>
-      <name>sink_source_facilities</name>
+      <name>initiallist</name>
     </institution>
-<institution>
+    <institution>
           <name>lwr_inst</name>
           <config>
-               <DeployInst>
-                  <xi:include href="input/lwr_reactor_deployment.xml#xpointer(/inclusions/child::*)"/>
-               </DeployInst>
+            <xi:include href="input/lwr_reactor_deployment.xml#xpointer(/inclusions/child::*)"/>
           </config>
      </institution>
 
