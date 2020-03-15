@@ -3,6 +3,7 @@ from collections import Counter
 import matplotlib.pyplot as plt
 import numpy as np
 from textwrap import wrap
+import seaborn as sns
 
 
 def format_agent_dict(output_file, simple=True):
@@ -140,14 +141,14 @@ def plot_agents(all_agents, name, simple=True):
         ax.stackplot(all_agents['lwr'].keys(),
                      all_agents['lwr'].values(),
                      all_agents['fr'].values())
-        ax.legend(['lwr', 'sfr'], bbox_to_anchor=(1.1, 1), fontsize=14)
+        ax.legend(['lwr', 'sfr'], bbox_to_anchor=(0.15, 1), fontsize=14)
     else:
         ax.stackplot(all_agents['lwr'].keys(),
                      all_agents['lwr'].values(),
                      all_agents['fr'].values(),
                      all_agents['moxlwr'].values())
         ax.legend(['lwr', 'sfr', 'moxlwr'],
-                  bbox_to_anchor=(1.15, 1), fontsize=14)
+                  bbox_to_anchor=(0.15, 1), fontsize=14)
     ax.set_title(
         'No. of Reactor Facilities in simulation at each time step',
         fontsize=18)
@@ -203,6 +204,7 @@ def plot_agents(all_agents, name, simple=True):
     ax.grid(alpha=0.7)
     ax.set_xlim(0, 1450)
     ax.set_xlabel('Months', fontsize=18)
+    col = sns.color_palette("tab20", 13)
     ax.set_ylabel('Number of Agents in Simulation', fontsize=18)
     if simple:
         ax.stackplot(all_agents[prototypes[0]].keys(),
@@ -229,8 +231,8 @@ def plot_agents(all_agents, name, simple=True):
                      all_agents[prototypes[9]].values(),
                      all_agents[prototypes[10]].values(),
                      all_agents[prototypes[11]].values(),
-                     all_agents[prototypes[12]].values())
-    ax.legend(prototypes2, bbox_to_anchor=(1.31, 1), fontsize=14)
+                     all_agents[prototypes[12]].values(), colors=col)
+    ax.legend(prototypes2, bbox_to_anchor=(0.32, 1), fontsize=14)
     ax.set_title(
         'No. of Supporting Facilities in simulation at each timestep',
         fontsize=18)
@@ -419,3 +421,102 @@ def plot_all_undersupply(
     plt.suptitle(title, fontsize=18)
     plt.savefig(name, dpi=300, bbox_inches='tight')
     plt.show()
+
+
+def histogram_formatting(
+        commods,
+        methods,
+        general_sqlite,
+        demand_driven=True,
+        demand_eq='0'):
+    everything = {}
+    for y in methods:
+        everything[y] = {}
+    for y in range(len(methods)):
+        output_file = general_sqlite + methods[y] + '.sqlite'
+        for x in range(len(commods)):
+            if commods[x] == 'power':
+                dots, diff = get_undersupply_timesteps(
+                    output_file, commods[x], demand_eq=demand_eq,
+                    driving_commod=True)
+            elif demand_driven:
+                dots, diff = get_undersupply_timesteps(output_file, commods[x])
+            else:
+                dots, diff = get_undersupply_timesteps(
+                    output_file, commods[x], demand_driving=False)
+            binvals, binsize = np.histogram(
+                list(
+                    dots.keys()), bins=list(np.arange(0, 1450, 50)))
+            everything[methods[y]][commods[x]] = binvals
+    return everything
+
+
+def plot_histogram(
+        commods1,
+        commodnames1,
+        commods2,
+        commodnames2,
+        methods,
+        methodnames,
+        general_sqlite,
+        demand_eq,
+        title,
+        name,
+        yticks):
+    everything1 = histogram_formatting(
+        commods=commods1,
+        methods=methods,
+        general_sqlite=general_sqlite,
+        demand_driven=True,
+        demand_eq=demand_eq)
+    everything2 = histogram_formatting(
+        commods=commods2,
+        methods=methods,
+        general_sqlite=general_sqlite,
+        demand_driven=False,
+        demand_eq=demand_eq)
+    everything = everything1.copy()
+    for x in methods:
+        everything[x].update(everything2[x])
+    commods = commods1 + commods2
+    commodnames = commodnames1 + commodnames2
+    fig = plt.figure(figsize=(15, 15))
+    palette = plt.get_cmap('Paired')
+    for y in range(len(methods)):
+        ax = fig.add_subplot(4, 2, y + 1)
+        ind = np.arange(28)
+        totalbottom = 0
+        for x in range(len(everything[methods[y]])):
+            if x == 0:
+                ax.bar(ind + 0.5, everything[methods[y]]
+                       [commods[x]], color=palette(x))
+            else:
+                ax.bar(ind + 0.5,
+                       everything[methods[y]][commods[x]],
+                       bottom=totalbottom,
+                       color=palette(x))
+            totalbottom += everything[methods[y]][commods[x]]
+        ax.set_title('Prediction Method: ' + methodnames[y])
+        ax.set_ylabel('Undersupplied time steps', fontsize=14)
+        ax.set_xlabel('Month', fontsize=14)
+        ax.set_xticks(ind)
+        months = list(np.arange(0, 1450, 50))
+        ax.set_xticklabels(months, rotation=65)
+        ax.set_yticks(yticks)
+        ax.set_ylim(0, yticks[-1])
+        ax.yaxis.grid()
+        if y == len(methods) - 1:
+            ax.legend(commodnames, loc="upper center",
+                      ncol=4, bbox_to_anchor=(-0.07, -0.3))
+    fig.subplots_adjust(
+        left=None,
+        bottom=None,
+        right=None,
+        top=None,
+        wspace=None,
+        hspace=0.4)
+    fig.subplots_adjust(bottom=-0.1, wspace=0.15)
+    props = dict(boxstyle='round', facecolor='white', alpha=0.5)
+    fig.suptitle(title, x=0.50, y=0.92, fontsize=16)
+    plt.savefig(name, dpi=400, bbox_inches='tight')
+    return
